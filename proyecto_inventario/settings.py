@@ -80,12 +80,10 @@ import os
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',  # Usa el backend de PostgreSQL
-        'NAME': BASE_DIR / "db.sqlite3",  # Nombre de la base de datos
-    }
+    'default': dj_database_url.config(
+        default='sqlite:///db.sqlite3'  # Base de datos por defecto si DATABASE_URL no está definida
+    )
 }
-
 database_url = os.environ.get("DATABASE_URL")
 DATABASES["default"] = dj_database_url.parse(database_url)
 
