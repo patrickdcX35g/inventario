@@ -84,8 +84,10 @@ DATABASES = {
         default='sqlite:///db.sqlite3'  # Base de datos por defecto si DATABASE_URL no está definida
     )
 }
-database_url = os.environ.get("DATABASE_URL")
-DATABASES["default"] = dj_database_url.parse(database_url)
+
+
+
+DATABASES["default"] = dj_database_url.parse("postgresql://inventario_zsbn_user:lhgqum7dLge58URNbeqhXDVldUIdFG6W@dpg-d00qm1qdbo4c73djhgn0-a.virginia-postgres.render.com/inventario_zsbn")
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
