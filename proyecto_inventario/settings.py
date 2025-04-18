@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-f7p^m)-g5*uuf_cg4im9usl2s4xj3y6v49k%$llko$p)oa@cfh
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -73,17 +73,21 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'proyecto_inventario.wsgi.application'
 
+import dj_database_url
+import os
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL'),
+        conn_max_age=600,
+        ssl_require=True
+    )
 }
 
+DATABASE_URL = 'postgresql://inventario_8r2x_user:nWjrIcPg6zx9asg98GVuKFgVT3pm7kD7@dpg-d00qiuruibrs73eokor0-a/inventario_8r2x'
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
