@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex-1 p-4 bg-gray-100 min-h-screen">
+    <div class="max-w-7xl mx-auto rounded-lg shadow-md border border-gray-200 space-y-4">
+        <!-- Encabezado -->
+        <div class="flex items-center space-x-3 bg-white p-3 rounded-lg shadow-sm">
+            <div class="bg-blue-600 text-white rounded-full p-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M13 16h-1v-4h-1m0-4h.01M21 12A9 9 0 113 12a9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-lg font-semibold text-gray-800">Punto de Venta</h1>
+                <p class="text-xs text-gray-500">Vende productos a la orden de compra</p>
+            </div>
+            {% if caja_abierta %}
+<div class="flex justify-end mb-4">
+    <a href="{% url 'cerrar_caja' caja_abierta.id %}">Cerrar Caja</a>
+</div>
+{% endif %}
+        </div>
+        {% if not caja_abierta %}
+        <div class="bg-yellow-200 text-yellow-800 p-4 rounded shadow mb-4">
+            <strong>Atención:</strong> No tienes una caja abierta actualmente.
+            <a href="{% url 'abrir_caja' %}" class="text-blue-600 underline">Haz clic aquí para abrir una</a>.
+        </div>
+    {% else %}
+        <!-- Formulario -->
+        <div class="bg-white p-4 rounded-lg shadow-sm">
+            <form id="formVenta" method="POST" class="space-y-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {% csrf_token %}
+                
+                <!-- Inputs -->
+                <div class="lg:col-span-2 grid grid-cols-1 gap-4">
+                    <!-- Cliente y Fecha -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">👤 Cliente</label>
+                            <input type="text" name="cliente" class="w-full border-2 border-gray-200 rounded-md px-3 py-1.5 focus:ring-2 focus:ring-blue-500 text-xs" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">📅 Fecha</label>
+                            <input type="date" name="fecha" class="w-full border-2 border-gray-200 rounded-md px-3 py-1.5 focus:ring-2 focus:ring-blue-500 text-xs" required>
+                        </div>
+                    </div>
+
+                    <!-- Almacén y buscador -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">🏬 Almacén</label>
+                        <select name="almacen_id" id="almacen" class="w-full border-2 border-gray-200 rounded-md px-3 py-1.5 focus:ring-2 focus:ring-blue-500 text-xs" required>
+                            <option value="todos">-- Todos los productos --</option>
+                            {% for almacen in almacenes %}
+                                <option value="{{ almacen.id }}">{{ almacen.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <input type="text" id="buscador" placeholder="🔍 Buscar producto..." class="w-full px-3 py-1.5 border-2 border-gray-200 rounded-md focus:ring-2 focus:ring-purple-500 text-xs">
+                    </div>
+
+                    <!-- Productos disponibles -->
+                    <div id="contenedorProductos" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                        <!-- Tarjetas generadas dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Aside: productos seleccionados (más ancho) -->
+                <div class="lg:col-span-1 w-full lg:w-[350px]">
+                    <aside class="bg-gray-50 border rounded-md p-4 shadow-sm mt-4 lg:mt-0 ">
+                        <h3 class="text-sm font-semibold text-gray-700 mb-3">🛒 Productos Seleccionados</h3>
+                        <div id="productosSeleccionados" class="space-y-3 bg-gray-50 border rounded-md p-3 shadow-inner text-xs my-5">
+                            <!-- Productos añadidos dinámicamente -->
+                        </div>
+
+                        <button type="submit" class="w-full bg-gray-800 text-white py-1.5 text-xs rounded-md hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 transition-all duration-200">
+                            💾 Registrar Venta
+                        </button>
+                    </aside>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Notificación -->
+<div id="toastNotificacion" class="fixed top-5 right-5 bg-green-600 text-white px-4 py-2 rounded-md shadow-lg z-50 hidden opacity-0 transition-opacity duration-300">
+    ✅ Producto agregado correctamente
+</div>
+
+<!-- SCRIPT -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const almacenSelect = document.getElementById('almacen');
+    const contenedor = document.getElementById('contenedorProductos');
+    const buscador = document.getElementById('buscador');
+    const seleccionados = document.getElementById('productosSeleccionados');
+
+    let productos = [];
+    let productosAgregados = [];
+
+    const productosIniciales = {{ productos|safe }};
+    productos = productosIniciales;
+    renderizarProductos();
+
+    almacenSelect.addEventListener('change', cargarProductos);
+    buscador.addEventListener('input', renderizarProductos);
+
+    function cargarProductos() {
+        const almacenId = almacenSelect.value;
+
+        if (almacenId === "todos") {
+            productos = productosIniciales;
+            renderizarProductos();
+            return;
+        }
+
+        fetch(`/ventas/productos-por-almacen/${almacenId}/`)
+            .then(res => res.json())
+            .then(data => {
+                productos = data;
+                renderizarProductos();
+            });
+    }
+
+    function renderizarProductos() {
+        contenedor.innerHTML = '';
+        const filtro = buscador.value.toLowerCase();
+        const filtrados = productos.filter(p =>
+            p.descripcion.toLowerCase().includes(filtro) || p.codigo.toLowerCase().includes(filtro)
+        );
+
+        filtrados.forEach(producto => {
+            const card = document.createElement('div');
+            card.className = 'border p-4 rounded-lg shadow hover:shadow-md mb-4 text-xs';
+            card.innerHTML = `
+                <h4 class="text-sm font-semibold">${producto.descripcion}</h4>
+                <p class="text-xs text-gray-600">${producto.codigo}</p>
+                <p class="text-xs text-gray-800 font-medium">Stock: ${producto.stock}</p>
+                <p class="text-xs text-gray-500 italic">🏬 ${producto.almacen_nombre}</p>
+                <button data-id="${producto.id}" data-almacen="${producto.almacen_id}" class="agregar bg-green-500 text-white mt-2 px-3 py-1 rounded text-xs">Agregar</button>
+            `;
+            contenedor.appendChild(card);
+        });
+    }
+
+    contenedor.addEventListener('click', function (e) {
+        if (e.target.classList.contains('agregar')) {
+            e.preventDefault();
+            const id = e.target.dataset.id;
+            const almacen_id = e.target.dataset.almacen;
+            const producto = productos.find(p => p.id == id && p.almacen_id == almacen_id);
+            const cantidad = 1;
+
+            if (!productosAgregados.find(p => p.id == id && p.almacen_id == almacen_id)) {
+                productosAgregados.push({ ...producto, cantidad });
+            } else {
+                const productoAgregado = productosAgregados.find(p => p.id == id && p.almacen_id == almacen_id);
+                productoAgregado.cantidad += cantidad;
+            }
+
+            mostrarSeleccionados();
+            mostrarToast();  // Mostrar notificación
+        }
+    });
+
+    function mostrarSeleccionados() {
+        seleccionados.innerHTML = '';
+        productosAgregados.forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'border rounded-lg p-3 flex items-center gap-4 mb-2';
+            div.innerHTML = `
+                <input type="hidden" name="productos[]" value="${p.id}">
+                <input type="hidden" name="almacenes[]" value="${p.almacen_id}">
+                <div class="flex-1">
+                    <p><strong>${p.descripcion}</strong> (${p.codigo})</p>
+                    <p class="text-xs text-gray-600">Stock: ${p.stock}</p>
+                </div>
+                <input type="number" name="cantidades[]" min="0.01" step="0.01" value="${p.cantidad}" required
+    class="w-20 px-2 py-1 border rounded cantidad-input" data-id="${p.id}" data-almacen="${p.almacen_id}">
+               <button type="button" class="eliminar bg-red-500 text-white px-2 py-1 rounded" onclick="eliminarProducto(${p.id}, ${p.almacen_id})">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+    </svg>
+</button>
+            `;
+            seleccionados.appendChild(div);
+        });
+
+        document.querySelectorAll('.cantidad-input').forEach(input => {
+            input.addEventListener('input', function () {
+                const id = parseInt(this.dataset.id);
+                const almacen_id = parseInt(this.dataset.almacen);
+                const nuevaCantidad = parseFloat(this.value);
+                const producto = productosAgregados.find(p => p.id === id && p.almacen_id === almacen_id);
+                if (producto) {
+                    producto.cantidad = nuevaCantidad;
+                }
+            });
+        });
+    }
+
+    window.eliminarProducto = function(productoId, almacenId) {
+        productosAgregados = productosAgregados.filter(p => !(p.id == productoId && p.almacen_id == almacenId));
+        mostrarSeleccionados();
+    }
+
+    function mostrarToast() {
+        const toast = document.getElementById("toastNotificacion");
+        toast.classList.remove("hidden");
+        toast.classList.add("opacity-100");
+
+        setTimeout(() => {
+            toast.classList.add("hidden");
+            toast.classList.remove("opacity-100");
+        }, 2000); // 2 segundos
+    }
+});
+
+</script>
+{% endif %}
+{% endblock %}

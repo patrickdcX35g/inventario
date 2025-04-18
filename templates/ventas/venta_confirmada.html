@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex-1 p-6 bg-gray-100 min-h-screen">
+  <div class="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow-lg border border-gray-300 print:border-0 print:shadow-none print:p-0">
+
+    <!-- Encabezado -->
+    <div class="flex justify-between items-center border-b pb-4 mb-4">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">🧾 Boleta de Venta</h1>
+        <p class="text-sm text-gray-500">Emitida el {{ venta.fecha }}</p>
+      </div>
+      <button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 print:hidden">
+        🖨️ Imprimir
+      </button>
+    </div>
+
+    <!-- Datos del cliente -->
+    <div class="mb-6">
+      <p><span class="font-semibold">👤 Cliente:</span> {{ venta.cliente }}</p>
+      <p><span class="font-semibold">📅 Fecha:</span> {{ venta.fecha }}</p>
+    </div>
+
+    <!-- Tabla de productos -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border border-gray-200 rounded-lg overflow-hidden">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="px-4 py-2 border-b text-sm text-gray-700">Producto</th>
+            <th class="px-4 py-2 border-b text-sm text-gray-700">Cantidad</th>
+            <th class="px-4 py-2 border-b text-sm text-gray-700">Precio Unitario</th>
+            <th class="px-4 py-2 border-b text-sm text-gray-700">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for detalle in venta.detalles.all %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2 border-b">{{ detalle.producto.descripcion }}</td>
+            <td class="px-4 py-2 border-b">{{ detalle.cantidad }}</td>
+            <td class="px-4 py-2 border-b">S/ {{ detalle.precio_unitario }}</td>
+            <td class="px-4 py-2 border-b">S/ {{ detalle.total }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr class="bg-gray-50">
+            <td colspan="3" class="px-4 py-2 font-semibold text-right">Total Venta:</td>
+            <td class="px-4 py-2 font-bold text-blue-600">S/ {{ venta.total }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <!-- Mensaje de agradecimiento -->
+    <div class="text-center mt-8 text-sm text-gray-500 print:hidden">
+      Gracias por su compra 🛍️
+    </div>
+
+  </div>
+</div>
+{% endblock %}

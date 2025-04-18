@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <div class="flex-1 p-6">
+    <div class="max-w-7xl mx-auto space-y-6">
+
+      <!-- Panel superior -->
+      <div class="flex items-center space-x-4 bg-white p-4 rounded-lg shadow-md">
+        <div class="bg-blue-600 text-white rounded-full p-3">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M13 16h-1v-4h-1m0-4h.01M21 12A9 9 0 113 12a9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-xl font-semibold text-gray-800">Agregar Producto</h1>
+          <p class="text-sm text-gray-500">Formulario para registrar un nuevo producto</p>
+        </div>
+      </div>
+
+      <!-- Formulario -->
+      <div class="bg-white p-6 rounded-lg shadow-md">
+        <form method="post" class="space-y-6">
+          {% csrf_token %}
+          <div class="grid grid-cols-1 gap-6">
+            <div class="flex flex-col">
+              {{ form.as_p }}
+            </div>
+          </div>
+
+          <div class="flex justify-end mt-6">
+            <button type="submit"
+              class="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+              Guardar
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+  {% endblock %}
+</body>
+</html>

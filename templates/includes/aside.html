@@ -1,0 +1,45 @@
+<aside class="w-64 bg-white h-screen shadow-lg p-6 hidden md:block">
+    <h2 class="text-lg font-bold mb-6 text-blue-600">Panel</h2>
+    <nav class="space-y-4">
+        <a href="{% url 'agregar_producto' %}" class="flex items-center space-x-2 text-gray-700 hover:text-blue-600">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 7h18M3 12h18M3 17h18"/>
+            </svg>
+            <span>Productos</span>
+        </a>
+        <a href="{% url 'vista_inventario' %}" class="flex items-center space-x-2 text-gray-700 hover:text-blue-600">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0l-8 5-8-5"/>
+            </svg>
+            <span>Inventario</span>
+        </a>
+        <a href="{% url 'registrar_compra' %}" class="flex items-center space-x-2 text-gray-700 hover:text-blue-600">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M3 3h18v4H3V3zm0 6h18v12H3V9z" />
+            </svg>
+            <span>Registrar Compra</span>
+        </a>
+    
+        <!-- Icono de venta: Ticket -->
+        <a href="{% url 'registrar_venta' %}" class="flex items-center space-x-2 text-gray-700 hover:text-blue-600">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M9 14l2-2 4 4m0 0l-4 4m4-4H3" />
+            </svg>
+            <span>Registrar Venta</span>
+        </a>
+    
+        <!-- Icono de predicción: Gráfico -->
+        <a href="{% url 'prediccion_productos' %}" class="flex items-center space-x-2 text-gray-700 hover:text-blue-600">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M11 3v18M6 16l4-4 5 5 5-6" />
+            </svg>
+            <span>Predicción</span>
+        </a>
+    </nav>
+</aside>

@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+{% block content %}
+  <!-- CONTENIDO PRINCIPAL -->
+  <div class="flex-1 p-6 text-xs">
+
+    <div class="max-w-7xl mx-auto space-y-6">
+
+      <!-- Panel superior -->
+      <div class="flex items-center space-x-4 bg-white p-4 rounded-lg shadow-md">
+        <div class="bg-blue-600 text-white rounded-full p-3">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M13 16h-1v-4h-1m0-4h.01M21 12A9 9 0 113 12a9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-lg font-semibold text-gray-800">Registrar Compra</h1>
+          <p class="text-xs text-gray-500">Agregar productos a la orden de compra</p>
+        </div>
+      </div>
+
+      <!-- Formulario -->
+      <div class="bg-white p-6 rounded-lg shadow-md">
+        <form method="post" id="compraForm">
+          {% csrf_token %}
+          <input type="hidden" name="form-TOTAL_FORMS" value="0" id="id_form-TOTAL_FORMS">
+          <input type="hidden" name="form-INITIAL_FORMS" value="0" id="id_form-INITIAL_FORMS">
+          <input type="hidden" name="form-MIN_NUM_FORMS" value="0" id="id_form-MIN_NUM_FORMS">
+          <input type="hidden" name="form-MAX_NUM_FORMS" value="1000" id="id_form-MAX_NUM_FORMS">
+
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
+            {{ form.as_p }}
+          </div>
+
+          <div class="flex justify-end mt-6">
+            <button type="button"
+              onclick="verificarFormulario()"
+              id="btnAbrirModal"
+              class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50">
+              Agregar Productos
+            </button>
+          </div>
+
+          <div id="productosSeleccionados" class="mt-6"></div>
+
+          <button type="button"
+            onclick="enviarCompraAjax()"
+            class="bg-green-600 text-white mt-6 w-full py-2 rounded-lg hover:bg-green-700">
+            Guardar Compra
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="modalProductos" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white w-full max-w-3xl p-6 rounded-xl shadow-lg text-xs">
+      <h2 class="text-lg font-bold mb-4">Agregar Productos</h2>
+
+      <input type="text" id="buscador" placeholder="Buscar productos..." 
+        class="w-full border px-4 py-2 rounded-md mb-4" onkeyup="filtrarProductos()">
+
+        <div id="listaProductos" class="max-h-64 overflow-y-auto space-y-2">
+            {% for producto in productos %}
+              <div class="p-2 bg-gray-100 rounded flex items-center justify-between">
+                <span>{{ producto.descripcion }}</span>
+                <button 
+                  type="button" 
+                  onclick="agregarProducto('{{ producto.id }}', '{{ producto.descripcion }}')"
+                  class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
+                  Seleccionar
+                </button>
+              </div>
+            {% endfor %}
+          </div>
+
+      <div class="text-right mt-4">
+        <button onclick="cerrarModal()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Ayuda Inicial -->
+<div id="ayudaModal" class="fixed top-24 left-6 w-64 bg-blue-50 border border-blue-300 text-blue-900 p-4 rounded-lg shadow-md z-50 hidden">
+    <div class="flex items-start space-x-2">
+      <svg class="w-6 h-6 mt-1 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m0-4h.01M21 12A9 9 0 113 12a9 9 0 0118 0z" />
+      </svg>
+      <div>
+        <h3 class="font-semibold text-sm mb-1">¿Necesitas ayuda?</h3>
+        <p class="text-sm">Aquí puedes registrar una compra. Primero completa los datos y luego haz clic en <strong>Agregar Productos</strong>.</p>
+        <button id="cerrarAyuda" class="mt-2 text-blue-600 hover:underline text-xs">No volver a mostrar</button>
+      </div>
+    </div>
+  </div>
+  {% endblock  %}
+
+  {% block scripts %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const modal = document.getElementById('ayudaModal');
+      const cerrar = document.getElementById('cerrarAyuda');
+  
+      if (!localStorage.getItem('ayudaCompraVisto')) {
+        modal.classList.remove('hidden');
+      }
+  
+      cerrar.addEventListener('click', function () {
+        modal.classList.add('hidden');
+        localStorage.setItem('ayudaCompraVisto', 'true');
+      });
+  
+      document.addEventListener('click', function (e) {
+        if (!modal.contains(e.target) && !modal.classList.contains('hidden')) {
+          modal.classList.add('hidden');
+          localStorage.setItem('ayudaCompraVisto', 'true');
+        }
+      });
+    });
+  </script>
+  
+  <script>
+
+
+    // Verificar que todos los campos estén llenos y si es válido, abrir el modal
+    function verificarFormulario() {
+    const form = document.getElementById("compraForm");
+    const campos = form.querySelectorAll("input, select, textarea");
+    let valido = true;
+
+    campos.forEach(campo => {
+        if (!campo.value && campo.name && campo.type !== "hidden") {
+            valido = false;
+            campo.classList.add("border-red-500");
+            campo.title = "Este campo es obligatorio"; // Agrega un mensaje emergente
+        } else {
+            campo.classList.remove("border-red-500");
+            campo.removeAttribute("title"); // Elimina el mensaje emergente
+        }
+    });
+
+    // Si todos los campos son válidos, abre el modal
+    if (valido) {
+        document.getElementById("modalProductos").classList.remove("hidden");
+        document.getElementById("modalProductos").classList.add("flex");
+    } else {
+        alert("Por favor, completa todos los campos obligatorios.");
+    }
+}
+    // Cerrar el modal
+    function cerrarModal() {
+        document.getElementById("modalProductos").classList.add("hidden");
+    }
+
+// Realiza la búsqueda de productos usando AJAX
+function filtrarProductos() {
+    const filtro = document.getElementById("buscador").value.toLowerCase();
+    const listaProductos = document.getElementById("listaProductos");
+
+    // Si no hay texto en el filtro, no hacemos nada
+    if (!filtro) {
+        listaProductos.innerHTML = '';
+        return;
+    }
+
+    // Realizamos la llamada AJAX a la vista de búsqueda
+    fetch(`/productos/buscar-productos/?q=${filtro}`)
+        .then(response => response.json())
+        .then(data => {
+            // Limpia la lista de productos mostrados
+            listaProductos.innerHTML = '';
+
+            // Agrega los productos encontrados al modal
+            data.productos.forEach(producto => {
+                const div = document.createElement('div');
+                div.classList.add('p-2', 'bg-gray-100', 'rounded', 'flex', 'items-center', 'justify-between');
+                div.innerHTML = `
+                    <span>${producto.descripcion}</span>
+                    <button 
+                        type="button" 
+                        onclick="agregarProducto('${producto.id}', '${producto.descripcion}')"
+                        class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
+                        Seleccionar
+                    </button>
+                `;
+                listaProductos.appendChild(div);
+            });
+        })
+        .catch(error => {
+            console.error('Error al buscar productos:', error);
+        });
+}
+
+    // Agregar producto a los productos seleccionados
+    function agregarProducto(id, descripcion) {
+    const contenedor = document.getElementById("productosSeleccionados");
+    const totalFormsInput = document.getElementById('id_form-TOTAL_FORMS');
+    const totalForms = parseInt(totalFormsInput.value);
+
+    // Crea el HTML para el producto seleccionado
+    const html = `
+        <div class="border rounded p-2 mb-2 bg-gray-50">
+            <strong>${descripcion}</strong>
+            <input type="hidden" name="form-${totalForms}-producto" value="${id}" />
+            <input type="number" name="form-${totalForms}-cantidad" placeholder="Cantidad" class="border ml-2 px-2 py-1 w-20" required />
+            <input type="number" step="0.01" name="form-${totalForms}-precio_unitario" placeholder="Precio" class="border ml-2 px-2 py-1 w-24" required />
+            <input type="number" step="0.01" name="form-${totalForms}-igv" placeholder="IGV" class="border ml-2 px-2 py-1 w-20" required />
+            <input type="text" name="form-${totalForms}-observacion" placeholder="Obs." class="border ml-2 px-2 py-1 w-40" />
+        </div>
+    `;
+
+    // Inserta el nuevo producto en el contenedor
+    contenedor.insertAdjacentHTML('beforeend', html);
+
+    // Actualiza el número total de formularios
+    totalFormsInput.value = totalForms + 1;
+
+    cerrarModal();
+}
+    // Enviar la compra y productos usando AJAX (fetch)
+    function enviarCompraAjax() {
+    const form = document.getElementById('compraForm');
+    const formData = new FormData(form);
+
+    fetch("{% url 'registrar_compra' %}", {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert("Compra registrada con éxito");
+            window.location.href = "{% url 'vista_inventario' %}";
+        } else {
+            // Mostrar los errores del formulario principal
+            if (data.form_errors) {
+                for (const campo in data.form_errors) {
+                    const mensajes = data.form_errors[campo].join(', ');
+                    alert(`Error en "${campo}": ${mensajes}`);
+                }
+            }
+
+            // Mostrar errores del formset
+            if (data.formset_errors) {
+                data.formset_errors.forEach((formulario, index) => {
+                    for (const campo in formulario) {
+                        const mensajes = formulario[campo].join(', ');
+                        alert(`Error en producto #${index + 1} (${campo}): ${mensajes}`);
+                    }
+                });
+            }
+
+            console.warn('Errores en formulario:', data);
+        }
+    })
+    .catch(error => {
+        alert("Error inesperado");
+        console.error(error);
+    });
+}
+</script>
+{% endblock  %}
+</body>
+</html>

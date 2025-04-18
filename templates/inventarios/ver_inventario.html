@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block content %}   
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="flex-1 p-6 text-xs">
+
+        <div class="max-w-7xl mx-auto space-y-6">
+
+            <!-- Panel superior -->
+            <div class="flex items-center space-x-4 bg-white p-4 rounded-lg shadow-md">
+                <div class="bg-orange-500 text-white rounded-full p-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M13 16h-1v-4h-1m0-4h.01M21 12A9 9 0 113 12a9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg font-semibold text-gray-800">Inventario de Productos</h1>
+                    <p class="text-xs text-gray-500">Visualización de los stocks</p>
+                </div>
+            </div>
+
+            <!-- Filtros -->
+            <div class="bg-white p-4 rounded-lg shadow-md space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <input id="searchInput" type="text" placeholder="Buscar por código o descripción"
+                        class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm col-span-2 focus:ring focus:ring-blue-200">
+
+                    <form method="get" class="col-span-2 grid grid-cols-2 gap-2">
+                        <label for="sucursal">Sucursal:</label>
+                        <select name="sucursal" id="sucursal" class="border p-2 rounded">
+                            <option value="">-- Todas --</option>
+                            {% for sucursal in sucursales %}
+                                <option value="{{ sucursal.id }}" {% if request.GET.sucursal == sucursal.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ sucursal.nombre }}
+                                </option>
+                            {% endfor %}
+                        </select>
+
+                        <label for="almacen">Almacén:</label>
+                        <select name="almacen" id="almacen" class="border p-2 rounded">
+                            <option value="">-- Todos --</option>
+                            {% for almacen in almacenes %}
+                                <option value="{{ almacen.id }}" {% if request.GET.almacen == almacen.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ almacen.nombre }}
+                                </option>
+                            {% endfor %}
+                        </select>
+
+                        <button type="submit"
+                                class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 col-span-2">
+                            Filtrar
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="flex justify-end gap-4">
+                <button class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700">PDF</button>
+                <button class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">Exportar Excel</button>
+            </div>
+
+            <!-- Tabla -->
+            <div class="bg-white shadow-md rounded-lg overflow-hidden">
+                <table class="min-w-full table-auto text-xs text-left text-gray-700">
+                    <thead class="bg-blue-500 text-white">
+                        <tr>
+                            <th class="px-4 py-3">Sucursal</th>
+                            <th class="px-4 py-3">Código</th>
+                            <th class="px-4 py-3">Descripción</th>
+                            <th class="px-4 py-3">Marca</th>
+                            <th class="px-4 py-3">Unidad</th>
+                            <th class="px-4 py-3">Estado</th>
+                            <th class="px-4 py-3">Almacén</th>
+                            <th class="px-4 py-3">Stock</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stockTable" class="bg-white divide-y divide-gray-200">
+                        {% for stock in stocks %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-2">{{ stock.almacen.sucursal.nombre }}</td>
+                                <td class="px-4 py-2">{{ stock.producto.codigo }}</td>
+                                <td class="px-4 py-2">{{ stock.producto.descripcion }}</td>
+                                <td class="px-4 py-2">{{ stock.producto.marca }}</td>
+                                <td class="px-4 py-2">{{ stock.producto.unidad }}</td>
+                                <td class="px-4 py-2">
+                                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
+                                        {{ stock.producto.estado }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-2">{{ stock.almacen.nombre }}</td>
+                                <td class="px-4 py-2 font-semibold {% if stock.cantidad < 0 %}text-red-600{% else %}text-green-600{% endif %}">
+                                    {{ stock.cantidad }}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center py-4">No hay productos registrados.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endblock %}
+    <!-- JS -->
+    {% block scripts %}
+    <script>
+        const input = document.getElementById('searchInput');
+        const table = document.getElementById('stockTable');
+
+        input.addEventListener('keyup', function () {
+            const searchTerm = input.value.toLowerCase();
+            const rows = table.getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const codigo = rows[i].cells[1]?.textContent.toLowerCase() || "";
+                const descripcion = rows[i].cells[2]?.textContent.toLowerCase() || "";
+
+                if (codigo.includes(searchTerm) || descripcion.includes(searchTerm)) {
+                    rows[i].style.display = "";
+                } else {
+                    rows[i].style.display = "none";
+                }
+            }
+        });
+    </script>
+    {% endblock %}
+
+</body>
+</html>
+

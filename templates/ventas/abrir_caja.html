@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    {% if caja_abierta %}
+        <p>La caja ya está abierta. Puedes proceder con la venta.</p>
+    {% else %}
+        <h1 class="text-2xl font-bold mb-4">Abrir Caja</h1>
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block mb-1">Monto Inicial:</label>
+                <input type="number" step="0.01" name="monto_inicial" required class="border p-2 rounded w-full">
+            </div>
+            <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Abrir Caja</button>
+        </form>
+    {% endif %}
+{% endblock %}
