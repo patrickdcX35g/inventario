@@ -80,15 +80,17 @@ import os
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
-        conn_max_age=600,
-        ssl_require=True
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',  # Usa el backend de PostgreSQL
+        'NAME': BASE_DIR / "db.sqlite3",  # Nombre de la base de datos
+    }
 }
 
-DATABASE_URL = 'postgresql://inventario_8r2x_user:nWjrIcPg6zx9asg98GVuKFgVT3pm7kD7@dpg-d00qiuruibrs73eokor0-a/inventario_8r2x'
+database_url = os.environ.get("DATABASE_URL")
+DATABASES["default"] = dj_database_url.parse(database_url)
 
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
